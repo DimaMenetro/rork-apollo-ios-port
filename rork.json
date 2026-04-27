@@ -1,0 +1,10 @@
+{
+  "$schema": "https://rork.com/schema/rork.json",
+  "apps": [
+    {
+      "name": "Apollo Engine",
+      "path": "ios",
+      "framework": "swift"
+    }
+  ]
+}
