@@ -2,8 +2,6 @@
 //  ApolloEngineApp.swift
 //  ApolloEngine
 //
-//  Created by Rork on April 27, 2026.
-//
 
 import SwiftUI
 import SwiftData
@@ -11,13 +9,12 @@ import SwiftData
 @main
 struct ApolloEngineApp: App {
     var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
+        let schema = Schema([Subject.self])
+        // Local SwiftData store. CloudKit private-database sync is enabled by
+        // switching to `.automatic` once the iCloud + CloudKit capability is added.
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            return try ModelContainer(for: schema, configurations: [config])
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }

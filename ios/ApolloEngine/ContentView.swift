@@ -2,60 +2,115 @@
 //  ContentView.swift
 //  ApolloEngine
 //
-//  Created by Rork on April 27, 2026.
+//  Top-level navigation. Adaptive: tab bar on iPhone, sidebar/split on iPad.
 //
 
 import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    @AppStorage("apollo.signedIn") private var signedIn: Bool = false
+    @AppStorage("apollo.preferredScheme") private var schemeRaw: String = "system"
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
-                }
-                .onDelete(perform: deleteItems)
+        Group {
+            if signedIn {
+                MainAppView()
+            } else {
+                WelcomeView()
             }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
         }
+        .preferredColorScheme(preferredScheme)
+        .apolloPalette()
     }
 
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
+    private var preferredScheme: ColorScheme? {
+        switch schemeRaw {
+        case "light": return .light
+        case "dark": return .dark
+        default: return nil
         }
     }
+}
 
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
+private struct MainAppView: View {
+    @Environment(\.horizontalSizeClass) private var hSize
+    @State private var selectedTab: AppTab = .dashboard
+
+    var body: some View {
+        TabView(selection: $selectedTab) {
+            Tab("Dashboard", systemImage: "rectangle.grid.2x2", value: AppTab.dashboard) {
+                NavigationStack {
+                    DashboardView()
+                        .apolloRoutes()
+                }
             }
+            Tab("Reports", systemImage: "doc.text.magnifyingglass", value: AppTab.reports) {
+                NavigationStack {
+                    ReportsView()
+                        .apolloRoutes()
+                }
+            }
+            Tab("Settings", systemImage: "gearshape", value: AppTab.settings) {
+                NavigationStack {
+                    SettingsView()
+                }
+            }
+        }
+        .tabViewStyle(.sidebarAdaptable)
+    }
+}
+
+// MARK: - Centralized navigation destinations
+
+private struct ApolloRoutesModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .navigationDestination(for: NavRoute.self) { route in
+                switch route {
+                case .subject(let id):    SubjectResolver(id: id) { SubjectDetailView(subject: $0) }
+                case .processing(let id): SubjectResolver(id: id) { ProcessingView(subject: $0) }
+                case .review(let id):     SubjectResolver(id: id) { SubjectReviewView(subject: $0) }
+                case .dspReport(let id):  SubjectResolver(id: id) { DSPReportView(subject: $0) }
+                case .esoteric(let id):   SubjectResolver(id: id) { EsotericProfileView(subject: $0) }
+                case .unified(let id):    SubjectResolver(id: id) { UnifiedDossierView(subject: $0) }
+                }
+            }
+    }
+}
+
+extension View {
+    func apolloRoutes() -> some View { modifier(ApolloRoutesModifier()) }
+}
+
+/// Resolves a Subject by id from SwiftData. Shows a clean fallback if missing.
+private struct SubjectResolver<Content: View>: View {
+    let id: String
+    @ViewBuilder var content: (Subject) -> Content
+    @Query private var subjects: [Subject]
+    @Environment(\.apollo) private var palette
+
+    init(id: String, @ViewBuilder content: @escaping (Subject) -> Content) {
+        self.id = id
+        self.content = content
+        _subjects = Query(filter: #Predicate<Subject> { $0.id == id })
+    }
+
+    var body: some View {
+        if let subject = subjects.first {
+            content(subject)
+        } else {
+            VStack(spacing: 12) {
+                Image(systemName: "questionmark.folder").font(.system(size: 36)).foregroundStyle(palette.muted)
+                Text("Subject not found").font(.system(size: 14)).foregroundStyle(palette.muted)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(AtmosphereBackdrop(section: .dashboard))
         }
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .modelContainer(for: Subject.self, inMemory: true)
 }
