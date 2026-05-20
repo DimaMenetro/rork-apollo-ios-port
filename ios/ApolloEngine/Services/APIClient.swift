@@ -103,16 +103,37 @@ final class APIClient {
         return resp.unified_dossier
     }
 
-    // MARK: - Audio analysis (Hume + AssemblyAI)
+    // MARK: - Media analysis (Hume multi-modal + AssemblyAI)
+    //
+    // Audio files run Hume prosody + language + burst alongside AssemblyAI
+    // universal-3-pro transcription. Video files additionally run Hume face
+    // (FACS) for facial expression / body language signal. Both modalities are
+    // routed through the same /api/analyzeAudio endpoint with a `media_type`
+    // hint so the worker selects the correct Hume model bundle.
 
-    struct AudioAnalysisResponse: Decodable {
+    enum MediaKind: String { case audio, video }
+
+    struct MediaAnalysisResponse: Decodable {
+        let media_type: String?
         let predictions: AnyCodable?
         let transcript: String?
+        let hume_error: String?
+        let transcript_error: String?
     }
 
-    func analyzeAudio(fileURL: String) async throws -> AudioAnalysisResponse {
-        let body: [String: Any] = ["file_url": fileURL]
+    /// Back-compat alias used by older call-sites.
+    typealias AudioAnalysisResponse = MediaAnalysisResponse
+
+    func analyzeMedia(fileURL: String, kind: MediaKind) async throws -> MediaAnalysisResponse {
+        let body: [String: Any] = [
+            "file_url": fileURL,
+            "media_type": kind.rawValue,
+        ]
         return try await post(.analyzeAudio, body: body)
+    }
+
+    func analyzeAudio(fileURL: String) async throws -> MediaAnalysisResponse {
+        try await analyzeMedia(fileURL: fileURL, kind: .audio)
     }
 
     // MARK: - LLM invocation (generic, used by Processing & Review)

@@ -1,7 +1,12 @@
 /**
- * Audio analysis — Hume prosody + AssemblyAI universal-3-pro transcription.
- * Direct port of base44/functions/analyzeAudio/entry.ts.
- * Same parallel fan-out and polling semantics.
+ * Media analysis — Hume multi-modal + AssemblyAI universal-3-pro transcription.
+ *
+ * Accepts both audio and video URLs. The Hume model bundle is selected per
+ * media type so video evidence yields facial expression (FACS) data alongside
+ * vocal prosody, while audio runs prosody + language + burst.
+ *
+ * Endpoint stays at /api/analyzeAudio for backwards compatibility with the
+ * original Base44 contract; callers may pass an optional `media_type`.
  */
 import { Context } from "hono";
 import type { Env } from "../types";
@@ -57,15 +62,32 @@ async function transcribeWithAssembly(env: Env, fileUrl: string): Promise<string
   return result.text || "";
 }
 
+function humeModelsFor(mediaType: "audio" | "video"): Record<string, unknown> {
+  // Hume batch models. Video gets face (FACS) + prosody + language + burst so
+  // facial/body expression lands alongside vocal emotion. Audio skips face.
+  if (mediaType === "video") {
+    return { face: {}, prosody: {}, language: {}, burst: {} };
+  }
+  return { prosody: {}, language: {}, burst: {} };
+}
+
+function inferMediaType(url: string, explicit?: string): "audio" | "video" {
+  if (explicit === "video" || explicit === "audio") return explicit;
+  const lower = url.toLowerCase().split("?")[0];
+  if (/\.(mp4|mov|m4v|webm|avi|mkv|hevc|3gp)$/.test(lower)) return "video";
+  return "audio";
+}
+
 export async function analyzeAudio(c: Context<{ Bindings: Env }>) {
-  let body: { file_url?: string };
+  let body: { file_url?: string; media_type?: string };
   try {
-    body = (await c.req.json()) as { file_url?: string };
+    body = (await c.req.json()) as { file_url?: string; media_type?: string };
   } catch {
     return c.json({ error: "Invalid JSON body" }, 400);
   }
   const fileUrl = body.file_url;
   if (!fileUrl) return c.json({ error: "file_url is required" }, 400);
+  const mediaType = inferMediaType(fileUrl, body.media_type);
 
   const env = c.env;
   if (!env.HUME_API_KEY || !env.ASSEMBLYAI_API_KEY) {
@@ -77,7 +99,7 @@ export async function analyzeAudio(c: Context<{ Bindings: Env }>) {
       const startRes = await fetch(HUME_API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Hume-Api-Key": env.HUME_API_KEY },
-        body: JSON.stringify({ models: { prosody: {} }, urls: [fileUrl] }),
+        body: JSON.stringify({ models: humeModelsFor(mediaType), urls: [fileUrl] }),
       });
       if (!startRes.ok) throw new Error(`Hume start failed: ${await startRes.text()}`);
       const { job_id } = (await startRes.json()) as { job_id: string };
@@ -104,6 +126,7 @@ export async function analyzeAudio(c: Context<{ Bindings: Env }>) {
   const transcriptText = transcript.status === "fulfilled" ? transcript.value : null;
 
   return c.json({
+    media_type: mediaType,
     predictions: humeData,
     transcript: transcriptText,
     hume_error: humeResult.status === "rejected" ? humeResult.reason?.message : null,

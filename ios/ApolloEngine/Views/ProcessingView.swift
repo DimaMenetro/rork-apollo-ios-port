@@ -207,24 +207,45 @@ struct ProcessingView: View {
             guard hasData else { continue }
             statuses[module.id] = "running"
             do {
-                // For the affective-state module, run Hume + AssemblyAI first so the
-                // LLM receives prosody/transcript context exactly like the Base44 flow.
+                // For the affective-state module, run Hume + AssemblyAI on EVERY
+                // audio AND video file so the LLM receives transcription plus
+                // multi-modal emotional/facial/body-language signal exactly like
+                // the Base44 flow expects. Video URLs get Hume face + prosody +
+                // language + burst; audio URLs get prosody + language + burst.
+                // AssemblyAI universal-3-pro transcribes both.
                 var audioContext = ""
                 if module.id == "affective_state" {
-                    let audioURLs = subject.streamBAudio + subject.streamCVideo
-                    if let first = audioURLs.first {
-                        let analysis = try await APIClient.shared.analyzeAudio(fileURL: first)
-                        var bits: [String] = []
-                        if let t = analysis.transcript, !t.isEmpty {
-                            bits.append("TRANSCRIPT (AssemblyAI universal-3-pro):\n\(t)")
+                    let mediaItems: [(String, APIClient.MediaKind)] =
+                        subject.streamBAudio.map { ($0, .audio) }
+                        + subject.streamCVideo.map { ($0, .video) }
+                    var blocks: [String] = []
+                    for (url, kind) in mediaItems {
+                        do {
+                            let analysis = try await APIClient.shared.analyzeMedia(fileURL: url, kind: kind)
+                            var bits: [String] = []
+                            let label = kind == .video ? "VIDEO" : "AUDIO"
+                            bits.append("[\(label)] \(url)")
+                            if let t = analysis.transcript, !t.isEmpty {
+                                bits.append("TRANSCRIPT (AssemblyAI universal-3-pro):\n\(t)")
+                            } else if let err = analysis.transcript_error {
+                                bits.append("TRANSCRIPT ERROR: \(err)")
+                            }
+                            if let p = analysis.predictions, let data = try? JSONEncoder().encode(p),
+                               let json = String(data: data, encoding: .utf8) {
+                                let header = kind == .video
+                                    ? "HUME MULTI-MODAL (face FACS + prosody + language + burst):"
+                                    : "HUME PROSODY + LANGUAGE + BURST:"
+                                bits.append("\(header)\n\(json.prefix(8000))")
+                            } else if let err = analysis.hume_error {
+                                bits.append("HUME ERROR: \(err)")
+                            }
+                            blocks.append(bits.joined(separator: "\n"))
+                        } catch {
+                            blocks.append("[\(kind == .video ? "VIDEO" : "AUDIO")] \(url)\nANALYSIS FAILED: \(error.localizedDescription)")
                         }
-                        if let p = analysis.predictions, let data = try? JSONEncoder().encode(p),
-                           let json = String(data: data, encoding: .utf8) {
-                            bits.append("HUME PROSODY PREDICTIONS:\n\(json.prefix(8000))")
-                        }
-                        if !bits.isEmpty {
-                            audioContext = "\n\nPRE-ANALYZED AUDIO DATA:\n\(bits.joined(separator: "\n\n"))"
-                        }
+                    }
+                    if !blocks.isEmpty {
+                        audioContext = "\n\nPRE-ANALYZED MEDIA DATA:\n" + blocks.joined(separator: "\n\n---\n\n")
                     }
                 }
                 let prompt = analysisPrompt(for: module.id, subjectName: subject.name) + audioContext
