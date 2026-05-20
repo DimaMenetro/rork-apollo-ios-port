@@ -2,7 +2,8 @@
 //  GlassComponents.swift
 //  ApolloEngine
 //
-//  Reusable Liquid Glass containers with iOS 18 fallback to `.ultraThinMaterial`.
+//  Reusable Liquid Glass containers. Pure iOS 26 — uses native `glassEffect`
+//  throughout. The deployment target is iOS 26.0 so no fallback path is needed.
 //
 
 import SwiftUI
@@ -22,23 +23,8 @@ struct GlassCard<Content: View>: View {
             .padding(padding)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background {
-                if #available(iOS 26.0, *) {
-                    Color.clear
-                        .glassEffect(in: .rect(cornerRadius: cornerRadius))
-                } else {
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .fill(.ultraThinMaterial)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [.white.opacity(0.10), .clear],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                        )
-                }
+                Color.clear
+                    .glassEffect(in: .rect(cornerRadius: cornerRadius))
             }
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
@@ -126,19 +112,11 @@ struct ApolloPrimaryButtonStyle: ButtonStyle {
             .padding(.vertical, 11)
             .foregroundStyle(.white)
             .background {
-                if #available(iOS 26.0, *) {
-                    Capsule().fill(
-                        LinearGradient(colors: [tint, tint.opacity(0.85)],
-                                       startPoint: .topLeading,
-                                       endPoint: .bottomTrailing)
-                    )
-                } else {
-                    Capsule().fill(
-                        LinearGradient(colors: [tint, tint.opacity(0.85)],
-                                       startPoint: .topLeading,
-                                       endPoint: .bottomTrailing)
-                    )
-                }
+                Capsule()
+                    .fill(LinearGradient(colors: [tint, tint.opacity(0.85)],
+                                         startPoint: .topLeading,
+                                         endPoint: .bottomTrailing))
+                    .glassEffect(in: .capsule)
             }
             .shadow(color: tint.opacity(0.35), radius: 12, y: 6)
             .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
@@ -156,7 +134,9 @@ struct ApolloSecondaryButtonStyle: ButtonStyle {
             .padding(.vertical, 10)
             .foregroundStyle(palette.title)
             .background {
-                Capsule().fill(.ultraThinMaterial)
+                Capsule()
+                    .fill(Color.clear)
+                    .glassEffect(in: .capsule)
             }
             .overlay(Capsule().strokeBorder(palette.cardStroke, lineWidth: 1))
             .scaleEffect(configuration.isPressed ? 0.96 : 1.0)

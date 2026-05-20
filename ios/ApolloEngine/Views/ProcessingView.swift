@@ -207,7 +207,40 @@ struct ProcessingView: View {
             guard hasData else { continue }
             statuses[module.id] = "running"
             do {
-                let prompt = analysisPrompt(for: module.id, subjectName: subject.name)
+                // For the affective-state module, run Hume + AssemblyAI first so the
+                // LLM receives prosody/transcript context exactly like the Base44 flow.
+                var audioContext = ""
+                if module.id == "affective_state" {
+                    let audioURLs = subject.streamBAudio + subject.streamCVideo
+                    if let first = audioURLs.first {
+                        let analysis = try await APIClient.shared.analyzeAudio(fileURL: first)
+                        var bits: [String] = []
+                        if let t = analysis.transcript, !t.isEmpty {
+                            bits.append("TRANSCRIPT (AssemblyAI universal-3-pro):\n\(t)")
+                        }
+                        if let p = analysis.predictions, let data = try? JSONEncoder().encode(p),
+                           let json = String(data: data, encoding: .utf8) {
+                            bits.append("HUME PROSODY PREDICTIONS:\n\(json.prefix(8000))")
+                        }
+                        if !bits.isEmpty {
+                            audioContext = "\n\nPRE-ANALYZED AUDIO DATA:\n\(bits.joined(separator: "\n\n"))"
+                        }
+                    }
+                }
+                let prompt = analysisPrompt(for: module.id, subjectName: subject.name) + audioContext
+                let fileURLs: [String]
+                switch module.id {
+                case "stylometric_fingerprint", "cognitive_architecture":
+                    fileURLs = subject.streamAText
+                case "psychomotor_state":
+                    fileURLs = subject.streamEAnalog
+                case "affective_state":
+                    fileURLs = subject.streamBAudio + subject.streamCVideo
+                case "behavioral_loop":
+                    fileURLs = subject.streamDBehavioral
+                default:
+                    fileURLs = []
+                }
                 let schema: [String: Any] = [
                     "summary": ["type": "string"],
                     "key_patterns": ["type": "array", "items": ["type": "string"]],
@@ -216,7 +249,7 @@ struct ProcessingView: View {
                     "flags": ["type": "array", "items": ["type": "string"]],
                     "processing_notes": ["type": "string"],
                 ]
-                let response = try await APIClient.shared.invokeLLM(prompt: prompt, schema: schema, fileURLs: [])
+                let response = try await APIClient.shared.invokeLLM(prompt: prompt, schema: schema, fileURLs: fileURLs)
                 let result = AnalysisModuleResult(
                     summary: response["summary"] as? String ?? "",
                     key_patterns: response["key_patterns"] as? [String] ?? [],

@@ -8,6 +8,7 @@
 
 import SwiftUI
 import UniformTypeIdentifiers
+import Foundation
 
 enum EvidenceStream: String, CaseIterable, Identifiable {
     case text       // stream_a_text
@@ -57,12 +58,24 @@ enum EvidenceStream: String, CaseIterable, Identifiable {
         case .analog: return [.image, .png, .jpeg]
         }
     }
+
+    var mimeType: String {
+        switch self {
+        case .text: return "application/octet-stream"
+        case .audio: return "audio/m4a"
+        case .video: return "video/mp4"
+        case .behavioral: return "application/octet-stream"
+        case .analog: return "image/jpeg"
+        }
+    }
 }
 
 struct EvidenceStreamUploader: View {
     let stream: EvidenceStream
     @Binding var files: [String]
     @State private var pickerOpen = false
+    @State private var uploadingCount: Int = 0
+    @State private var lastError: String? = nil
     @Environment(\.apollo) private var palette
 
     var body: some View {
@@ -82,9 +95,23 @@ struct EvidenceStreamUploader: View {
                         .foregroundStyle(palette.muted)
                 }
                 Spacer()
+                if uploadingCount > 0 {
+                    HStack(spacing: 6) {
+                        ProgressView().controlSize(.mini)
+                        Text("\(uploadingCount) uploading")
+                            .font(.system(size: 11))
+                            .foregroundStyle(palette.muted)
+                    }
+                }
                 Text("\(files.count)")
                     .font(.apolloMono)
                     .foregroundStyle(files.isEmpty ? palette.muted : Apollo.emerald)
+            }
+
+            if let lastError {
+                Text(lastError)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Apollo.rose)
             }
 
             if !files.isEmpty {
@@ -146,16 +173,36 @@ struct EvidenceStreamUploader: View {
         ) { result in
             switch result {
             case .success(let urls):
-                let strings = urls.compactMap { url -> String? in
-                    // For sandboxed access we'd need security-scoped bookmarks.
-                    // For now we capture the file URL as a string reference.
-                    url.absoluteString
-                }
-                files.append(contentsOf: strings)
-                Haptics.success()
+                Task { await uploadAll(urls) }
             case .failure:
                 Haptics.error()
             }
+        }
+    }
+
+    /// Reads each picked file and uploads it through the Worker's presigned PUT URL,
+    /// then appends the resulting publicURL to `files`. Public URLs are what the
+    /// LLM and audio-analysis modules ingest, exactly like the Base44 flow.
+    @MainActor
+    private func uploadAll(_ urls: [URL]) async {
+        uploadingCount = urls.count
+        defer { uploadingCount = 0 }
+        for url in urls {
+            let accessing = url.startAccessingSecurityScopedResource()
+            defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+            do {
+                let data = try Data(contentsOf: url)
+                let filename = url.lastPathComponent
+                let contentType = stream.mimeType
+                let presigned = try await APIClient.shared.presignUpload(filename: filename, contentType: contentType)
+                try await APIClient.shared.uploadFile(data, to: presigned, contentType: contentType)
+                files.append(presigned.publicURL)
+                Haptics.success()
+            } catch {
+                lastError = error.localizedDescription
+                Haptics.error()
+            }
+            uploadingCount -= 1
         }
     }
 }

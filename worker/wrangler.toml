@@ -1,0 +1,19 @@
+name = "apollo-engine"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# R2 bucket for evidence uploads (voice memos, video, handwriting samples)
+[[r2_buckets]]
+binding = "EVIDENCE"
+bucket_name = "apollo-evidence"
+
+# Secrets (set via: wrangler secret put <NAME>)
+#   HUME_API_KEY            — Hume AI prosody analysis
+#   ASSEMBLYAI_API_KEY      — AssemblyAI universal-3-pro transcription
+#   RORK_TOOLKIT_SECRET_KEY — Rork AI proxy bearer
+#   APOLLO_SHARED_SECRET    — Optional: shared header secret between iOS and Worker
+#   R2_PUBLIC_BASE          — Public URL prefix for the R2 bucket (e.g. https://evidence.apollo.workers.dev)
+
+[vars]
+RORK_AI_PROXY_URL = "https://toolkit.rork.com/text/llm/"

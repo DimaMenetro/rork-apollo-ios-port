@@ -6,46 +6,47 @@ The only server-side piece. Preserves the **exact** Base44 function logic — sa
 
 | Path | Function | Implementation |
 |------|----------|----------------|
-| `POST /api/invokeLLM`              | Generic LLM call (used by Processing + Review DSP synthesis) | Forwards to Rork AI proxy. Default model `claude-sonnet-4.6`. |
-| `POST /api/generateEsotericProfile`| CP-012 esoteric profile                                      | Same 4 staggered prompts (Phase I–II, III–IV, V–VII, VIII), same pre-computed Personal Year math, Gemini 3 Flash. Port of `base44/functions/generateEsotericProfile/entry.ts` line-for-line. |
-| `POST /api/synthesizeDossier`      | MELLMA unified dossier                                       | Same two parallel Claude Sonnet 4.6 calls (narrative sections + convergence map). Port of `base44/functions/synthesizeDossier/entry.ts`. |
-| `POST /api/analyzeAudio`           | Hume prosody + AssemblyAI universal-3-pro                    | Same polling loops and Promise.allSettled fan-out. Port of `base44/functions/analyzeAudio/entry.ts`. |
-| `POST /api/exportDSP`              | PDF export                                                   | Same jsPDF layout (cover, confidence arc, personality bars, predictive model, ESP sections, SME validation, footer) in light + dark themes. Port of `base44/functions/exportDSP/entry.ts`. |
-| `POST /api/presignUpload`          | R2 presigned upload URL                                      | Returns `{ uploadURL, publicURL }` for the iOS client to PUT a voice memo / video before passing the public URL to `/api/analyzeAudio`. |
+| `POST /api/invokeLLM`              | Generic LLM call (Processing + DSP synthesis) | Routed through Rork AI proxy. Default model `anthropic/claude-sonnet-4`. |
+| `POST /api/generateEsotericProfile`| CP-012 esoteric profile                       | Same 4 staggered prompts (Phase I–II, III–IV, V–VII, VIII), same pre-computed Personal Year math, Gemini 3 Flash. |
+| `POST /api/synthesizeDossier`      | MELLMA unified dossier                        | Same two parallel Claude Sonnet 4.6 calls (narrative sections + convergence map). |
+| `POST /api/analyzeAudio`           | Hume prosody + AssemblyAI universal-3-pro     | Same `Promise.allSettled` fan-out, same polling intervals. |
+| `POST /api/exportDSP`              | PDF export                                    | Same jsPDF layout — cover, confidence arc, personality bars, predictive model, ESP sections, SME validation, footer — in dark + light themes. |
+| `POST /api/presignUpload`          | R2 presigned PUT URL                          | HMAC-signed token, 10-minute TTL. |
+| `PUT  /api/upload`                 | Relayed upload to R2                          | Token-validated, content-type preserved. |
+| `GET  /api/evidence/:key`          | Read-back for uploaded evidence               | Used when no public R2 base URL is configured. |
 
 ## Required secrets
 
-```
-HUME_API_KEY            # from hume.ai dashboard
-ASSEMBLYAI_API_KEY      # from assemblyai.com dashboard
-RORK_TOOLKIT_SECRET_KEY # same value as EXPO_PUBLIC_RORK_TOOLKIT_SECRET_KEY
-R2_BUCKET               # bound R2 bucket for evidence files
+```bash
+wrangler secret put HUME_API_KEY
+wrangler secret put ASSEMBLYAI_API_KEY
+wrangler secret put RORK_TOOLKIT_SECRET_KEY     # same value as EXPO_PUBLIC_RORK_TOOLKIT_SECRET_KEY
+wrangler secret put APOLLO_SHARED_SECRET        # optional — enforces X-Apollo-Secret header on /api/*
 ```
 
-## Why a Worker
+R2 bucket:
 
-Hume and AssemblyAI keys cannot ship in the iOS bundle. The Worker holds them, exposes the same endpoint shape Base44 exposed, and proxies LLM calls through Rork's AI proxy so model selection and prompts stay identical.
+```bash
+wrangler r2 bucket create apollo-evidence
+```
+
+Optional public read-back (saves bandwidth via Cloudflare's edge):
+
+```bash
+wrangler r2 bucket dev-url enable apollo-evidence
+# then set R2_PUBLIC_BASE in wrangler.toml [vars]
+```
 
 ## Deploying
 
-1. `cd worker && npm install`
-2. `wrangler secret put HUME_API_KEY` (repeat for each secret)
-3. `wrangler r2 bucket create apollo-evidence` and bind as `R2_BUCKET` in `wrangler.toml`
-4. `wrangler deploy`
-5. Copy the deployed URL into `ios/ApolloEngine/Services/ApolloConfig.swift` (`workerURL`)
+```bash
+cd worker
+npm install
+npm run deploy
+```
 
-## Source-of-truth files to port
+Then copy the deployed URL into `ios/ApolloEngine/Services/ApolloConfig.swift` (`workerURL`) and, if you set `APOLLO_SHARED_SECRET`, into `ApolloConfig.workerSecret`.
 
-The Worker is a direct TypeScript port of these four files — copy them verbatim into the corresponding `src/handlers/*.ts`:
+## Why a Worker
 
-- `base44/functions/generateEsotericProfile/entry.ts`
-- `base44/functions/synthesizeDossier/entry.ts`
-- `base44/functions/analyzeAudio/entry.ts`
-- `base44/functions/exportDSP/entry.ts`
-
-Only the imports change:
-- `createClientFromRequest` → drop (Worker uses the Rork proxy directly)
-- `base44.asServiceRole.integrations.Core.InvokeLLM` → `fetch(RORK_AI_PROXY_URL, ...)`
-- `base44.asServiceRole.entities.Subject.update` → drop (iOS persists locally + CloudKit)
-
-Everything else — every prompt, every schema, every polling interval — stays identical.
+Hume and AssemblyAI keys cannot ship in the iOS bundle. The Worker holds them, exposes the same endpoint shape Base44 exposed, and proxies LLM calls through Rork's AI proxy so model selection and prompts stay identical to the original Base44 functions.

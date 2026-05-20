@@ -8,6 +8,8 @@ import SwiftData
 
 @main
 struct ApolloEngineApp: App {
+    @State private var auth = AuthManager()
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([Subject.self])
         // Local SwiftData store. CloudKit private-database sync is enabled by
@@ -23,6 +25,7 @@ struct ApolloEngineApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(auth)
         }
         .modelContainer(sharedModelContainer)
     }

@@ -40,7 +40,7 @@ A small Cloudflare Worker holds the Hume + AssemblyAI keys, proxies LLM calls th
 
 - **Atmosphere** — Each screen sits over an animated gradient backdrop with a soft accent orb that drifts behind the content (carried over from the web app's signature look). Orb color shifts per section: amber on DSP, violet on Esoteric, cyan on Unified, green on Reports.
 - **Light & dark** — Full support for both. The orbs, glass tints, and divider weights are tuned per mode so neither feels like an inverted copy.
-- **Glass containers** — Cards, navigation bars, tab bar, and modal sheets use the new iOS 26 `glassEffect` with `GlassEffectContainer` so neighboring glass surfaces refract together instead of stacking. iOS 18 fallback uses `.ultraThinMaterial`.
+- **Glass containers** — Cards, navigation bars, tab bar, and modal sheets use the iOS 26 `glassEffect` with `GlassEffectContainer` so neighboring glass surfaces refract together instead of stacking. Deployment target is iOS 26 — no `.ultraThinMaterial` fallback needed.
 - **Morphing transitions** — Section toggles (Text↔Visual), tab switches, and the "Synthesize Dossier" reveal use matched-geometry glass morphs so a tapped chip visibly expands into the panel it opens.
 - **Tactility** — Every primary action returns a haptic; long-press on a Subject card opens a glass context menu with quick actions (Open Review, Export PDF, Delete). Chart values count up on appearance with a spring; gauges fill with a one-shot ease curve.
 - **Typography** — SF Pro Display for titles, SF Mono for data labels (document IDs, scores, protocol tags) — preserves the "intelligence-analyst" character without going generic.
@@ -74,6 +74,20 @@ A small Cloudflare Worker holds the Hume + AssemblyAI keys, proxies LLM calls th
 - Widgets and Live Activities (good v1.1 additions for "synthesis in progress").
 - Real-time collaboration between operators.
 
-## Next step after approval
+## Build status
 
-Scaffold the Xcode project, set up CloudKit + Rork Auth, build the Worker, wire the four backend calls, then assemble the eight screens in the order they're used in a real session: Intake → Processing → Review → DSP → Esoteric → Unified → Reports → Dashboard polish.
+- [x] Scaffold Xcode project — iOS 26 deployment target, Liquid Glass throughout
+- [x] Subject entity schema (full Base44 parity, CloudKit-sync ready)
+- [x] Apollo palette + atmospheric backdrop with per-section accent orbs
+- [x] All 8 screens implemented (Welcome / Dashboard / Subject Detail / Intake / Processing / Review / DSP / Esoteric / Unified / Reports / Settings)
+- [x] Cloudflare Worker — full TypeScript port of all four Base44 functions (`/api/invokeLLM`, `/api/generateEsotericProfile`, `/api/synthesizeDossier`, `/api/analyzeAudio`, `/api/exportDSP`, `/api/presignUpload`)
+- [x] Reports — PDF export center (DSP / Esoteric / Merged × dark / light) with native share sheet
+- [x] Subject Intake — audio analysis wired (R2 presigned upload → Hume + AssemblyAI)
+- [x] Welcome — Sign in with Apple + Rork Auth Google sign-in
+- [x] Adaptive iPad layout via `.sidebarAdaptable` TabView + reading-width clamps
+
+## Operator setup (one-time)
+
+1. Deploy the Worker: `cd worker && npm install && wrangler deploy`. Set the four secrets (`HUME_API_KEY`, `ASSEMBLYAI_API_KEY`, `RORK_TOOLKIT_SECRET_KEY`, optional `APOLLO_SHARED_SECRET`) and create the `apollo-evidence` R2 bucket.
+2. Paste the deployed Worker URL into `ios/ApolloEngine/Services/ApolloConfig.swift` (`workerURL`).
+3. Build and run on iOS 26 simulator or device.

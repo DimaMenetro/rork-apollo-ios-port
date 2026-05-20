@@ -11,10 +11,16 @@ import SwiftData
 struct ContentView: View {
     @AppStorage("apollo.signedIn") private var signedIn: Bool = false
     @AppStorage("apollo.preferredScheme") private var schemeRaw: String = "system"
+    @Environment(AuthManager.self) private var auth
 
     var body: some View {
         Group {
-            if signedIn {
+            if auth.isLoading {
+                ZStack {
+                    AtmosphereBackdrop(section: .esoteric)
+                    ProgressView().controlSize(.large)
+                }
+            } else if signedIn || auth.user != nil {
                 MainAppView()
             } else {
                 WelcomeView()
