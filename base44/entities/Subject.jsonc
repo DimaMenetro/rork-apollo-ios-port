@@ -1,0 +1,529 @@
+{
+  "name": "Subject",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Subject identifier or name"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "intake",
+        "processing",
+        "review",
+        "finalized"
+      ],
+      "default": "intake",
+      "description": "Current stage in the profiling pipeline"
+    },
+    "dsp_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "generating",
+        "valid",
+        "failed",
+        "empty"
+      ],
+      "default": "pending",
+      "description": "DSP integrity status for quick health checks"
+    },
+    "stream_a_text": {
+      "type": "array",
+      "description": "Text data URLs (logs, emails, transcripts)",
+      "items": {
+        "type": "string"
+      }
+    },
+    "stream_b_audio": {
+      "type": "array",
+      "description": "Audio recording URLs (WAV/MP3)",
+      "items": {
+        "type": "string"
+      }
+    },
+    "stream_c_video": {
+      "type": "array",
+      "description": "Video footage URLs (MP4/MOV)",
+      "items": {
+        "type": "string"
+      }
+    },
+    "stream_d_behavioral": {
+      "type": "array",
+      "description": "Behavioral data URLs (decision logs, purchase history)",
+      "items": {
+        "type": "string"
+      }
+    },
+    "stream_e_analog": {
+      "type": "array",
+      "description": "Handwriting sample image URLs",
+      "items": {
+        "type": "string"
+      }
+    },
+    "analysis_results": {
+      "type": "object",
+      "description": "Results from all analysis modules",
+      "properties": {
+        "stylometric_fingerprint": {
+          "type": "object"
+        },
+        "cognitive_architecture": {
+          "type": "object"
+        },
+        "psychomotor_state": {
+          "type": "object"
+        },
+        "affective_state": {
+          "type": "object"
+        },
+        "behavioral_loop": {
+          "type": "object"
+        }
+      }
+    },
+    "conflicts_detected": {
+      "type": "array",
+      "description": "Flagged conflicts \u2014 analysis conflicts (type: analysis_conflict) and DSP integrity issues (type: dsp_integrity)",
+      "items": {
+        "type": "object"
+      }
+    },
+    "dsp": {
+      "type": "object",
+      "description": "Definitive Subject Profile",
+      "properties": {
+        "document_id": {
+          "type": "string"
+        },
+        "protocol_version": {
+          "type": "string"
+        },
+        "date_of_synthesis": {
+          "type": "string"
+        },
+        "confidence_score": {
+          "type": "number"
+        },
+        "confidence_justification": {
+          "type": "string"
+        },
+        "executive_summary": {
+          "type": "string"
+        },
+        "classification": {
+          "type": "string"
+        },
+        "final_assessment": {
+          "type": "string"
+        },
+        "personality_matrix": {
+          "type": "object",
+          "properties": {
+            "openness": {
+              "type": "object",
+              "properties": {
+                "score": {
+                  "type": "number"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "evidence": {
+                  "type": "string"
+                },
+                "indicators": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "conscientiousness": {
+              "type": "object",
+              "properties": {
+                "score": {
+                  "type": "number"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "evidence": {
+                  "type": "string"
+                },
+                "indicators": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "extraversion": {
+              "type": "object",
+              "properties": {
+                "score": {
+                  "type": "number"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "evidence": {
+                  "type": "string"
+                },
+                "indicators": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "agreeableness": {
+              "type": "object",
+              "properties": {
+                "score": {
+                  "type": "number"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "evidence": {
+                  "type": "string"
+                },
+                "indicators": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "neuroticism": {
+              "type": "object",
+              "properties": {
+                "score": {
+                  "type": "number"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "evidence": {
+                  "type": "string"
+                },
+                "indicators": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "cognitive_architecture": {
+          "type": "object",
+          "properties": {
+            "thinking_style": {
+              "type": "string"
+            },
+            "epistemic_requirements": {
+              "type": "string"
+            },
+            "defense_mechanisms": {
+              "type": "string"
+            },
+            "sub_sections": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "behavioral_patterns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "context": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "cognitive_map": {
+          "type": "object"
+        },
+        "action_response_matrix": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "motivations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "fears": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "esoteric_inputs": {
+      "type": "object",
+      "description": "Inputs required for CP-012-O-D-ESP Esoteric SME Protocol execution",
+      "properties": {
+        "full_birth_name": {
+          "type": "string",
+          "description": "Full legal birth name (required for numerology)"
+        },
+        "date_of_birth": {
+          "type": "string",
+          "description": "Date of birth e.g. March 15, 1985 (required)"
+        },
+        "place_of_birth": {
+          "type": "string",
+          "description": "City and country of birth (required for astrology)"
+        },
+        "time_of_birth": {
+          "type": "string",
+          "description": "Time of birth e.g. 14:32 (preferred, enables full natal chart)"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "RETROSPECTIVE",
+            "PRESENT-STATE",
+            "PROSPECTIVE",
+            "FULL-CYCLE"
+          ],
+          "description": "Analysis mode"
+        },
+        "timeframe": {
+          "type": "string",
+          "description": "Target timeframe e.g. 2020-2026"
+        },
+        "focus": {
+          "type": "string",
+          "description": "Optional focus domain e.g. identity transition, relationship pattern"
+        }
+      }
+    },
+    "esoteric_profile": {
+      "type": "object",
+      "description": "CP-012-O-D-ESP Esoteric SME Protocol output \u2014 optional, separate from DSP",
+      "properties": {
+        "include_in_dsp": {
+          "type": "boolean",
+          "description": "When true, this profile is appended to the DSP report"
+        },
+        "input_fidelity": {
+          "type": "string",
+          "description": "FULL, REDUCED-FIDELITY, or HALTED"
+        },
+        "execution_status": {
+          "type": "string",
+          "description": "COMPLIANT or NONCOMPLIANT"
+        },
+        "date_executed": {
+          "type": "string"
+        },
+        "inquiry_frame": {
+          "type": "string",
+          "description": "Esoteric Inquiry Frame"
+        },
+        "astrological_interpretation": {
+          "type": "string",
+          "description": "Node Alpha: time-governed psychodynamic and activation analysis"
+        },
+        "numerological_interpretation": {
+          "type": "string",
+          "description": "Node Beta: structural cycle and recurrence analysis"
+        },
+        "unified_emotional_synthesis": {
+          "type": "string",
+          "description": "Coherent merged subject model from arbitration of both nodes"
+        },
+        "threshold_assessment": {
+          "type": "string",
+          "description": "Subject's current phase: rupture, reintegration, plateau, or threshold transit"
+        },
+        "strategic_translation": {
+          "type": "string",
+          "description": "Practical behavioral, relational, and developmental guidance"
+        },
+        "limitation_statement": {
+          "type": "string",
+          "description": "Material constraints affecting confidence"
+        },
+        "sme_validation": {
+          "type": "object",
+          "description": "SME Validation Check per CP-012 \u00a74.20",
+          "properties": {
+            "astrology_governed_timing": {
+              "type": "boolean"
+            },
+            "numerology_governed_structure": {
+              "type": "boolean"
+            },
+            "emotional_depth_prioritized": {
+              "type": "boolean"
+            },
+            "practical_translation_achieved": {
+              "type": "boolean"
+            },
+            "generic_horoscope_drift_avoided": {
+              "type": "boolean"
+            },
+            "execution_status": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "unified_dossier": {
+      "type": "object",
+      "description": "LLM-synthesized unified dossier \u2014 arbitrated merge of DSP and Esoteric Profile into a single-voice document",
+      "properties": {
+        "date_synthesized": {
+          "type": "string",
+          "description": "ISO date when synthesis was performed"
+        },
+        "dsp_source_date": {
+          "type": "string",
+          "description": "DSP date_of_synthesis at time of merge \u2014 for staleness detection"
+        },
+        "esoteric_source_date": {
+          "type": "string",
+          "description": "Esoteric date_executed at time of merge \u2014 for staleness detection"
+        },
+        "unified_identity_portrait": {
+          "type": "string",
+          "description": "Merged executive summary + inquiry frame + unified emotional synthesis"
+        },
+        "psychodynamic_architecture": {
+          "type": "string",
+          "description": "Merged cognitive architecture + astrological interpretation"
+        },
+        "personality_archetypal_resonance": {
+          "type": "string",
+          "description": "Merged personality matrix + numerological interpretation"
+        },
+        "behavioral_topology": {
+          "type": "string",
+          "description": "Merged behavioral patterns + threshold assessment"
+        },
+        "predictive_convergence_model": {
+          "type": "string",
+          "description": "Merged action/response matrix + strategic translation"
+        },
+        "core_drivers_shadow": {
+          "type": "string",
+          "description": "Merged motivations/fears + limitation statement"
+        },
+        "convergence_map": {
+          "type": "object",
+          "description": "Explicit convergence/divergence analysis between the two lenses",
+          "properties": {
+            "convergence_points": {
+              "type": "array",
+              "description": "Where DSP and Esoteric independently agree",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "domain": {
+                    "type": "string"
+                  },
+                  "dsp_evidence": {
+                    "type": "string"
+                  },
+                  "esoteric_evidence": {
+                    "type": "string"
+                  },
+                  "significance": {
+                    "type": "string"
+                  },
+                  "confidence": {
+                    "type": "number"
+                  }
+                }
+              }
+            },
+            "divergence_points": {
+              "type": "array",
+              "description": "Where DSP and Esoteric see different things",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "domain": {
+                    "type": "string"
+                  },
+                  "dsp_position": {
+                    "type": "string"
+                  },
+                  "esoteric_position": {
+                    "type": "string"
+                  },
+                  "arbitration": {
+                    "type": "string"
+                  },
+                  "tension_value": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "overall_alignment_score": {
+              "type": "number",
+              "description": "0-100 representing how aligned the two lenses are"
+            }
+          }
+        },
+        "final_unified_assessment": {
+          "type": "string",
+          "description": "The single-voice definitive portrait"
+        },
+        "synthesis_confidence": {
+          "type": "number",
+          "description": "0-100 confidence in the synthesis quality"
+        },
+        "synthesis_methodology_note": {
+          "type": "string",
+          "description": "Brief note on how the synthesis was conducted"
+        }
+      }
+    },
+    "operator_notes": {
+      "type": "string",
+      "description": "Operator refinement notes"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}
