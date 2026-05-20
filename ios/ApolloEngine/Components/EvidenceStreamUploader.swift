@@ -50,16 +50,66 @@ enum EvidenceStream: String, CaseIterable, Identifiable {
     }
 
     var contentTypes: [UTType] {
+        // Markdown / RTF / DOCX / XLSX / XLS have no static UTType constants, so we
+        // construct them from filename extension so the document picker accepts them.
+        let markdown = UTType(filenameExtension: "md") ?? .plainText
+        let markdownAlt = UTType(filenameExtension: "markdown") ?? .plainText
+        let rtf = UTType.rtf
+        let rtfd = UTType.rtfd
+        let docx = UTType(filenameExtension: "docx") ?? .data
+        let doc = UTType(filenameExtension: "doc") ?? .data
+        let xlsx = UTType(filenameExtension: "xlsx") ?? .spreadsheet
+        let xls = UTType(filenameExtension: "xls") ?? .spreadsheet
+        let tsv = UTType(filenameExtension: "tsv") ?? .plainText
         switch self {
-        case .text: return [.text, .pdf, .plainText, .commaSeparatedText]
-        case .audio: return [.audio, .mp3, .wav, .mpeg4Audio]
-        case .video: return [.movie, .video, .mpeg4Movie, .quickTimeMovie]
-        case .behavioral: return [.commaSeparatedText, .spreadsheet, .json, .text]
-        case .analog: return [.image, .png, .jpeg]
+        case .text:
+            return [.plainText, .text, .utf8PlainText, .pdf, .rtf, rtfd,
+                    markdown, markdownAlt, doc, docx,
+                    .commaSeparatedText, tsv, .json, .xml, .html]
+        case .audio:
+            return [.audio, .mp3, .wav, .mpeg4Audio, .aiff, .midi]
+        case .video:
+            return [.movie, .video, .mpeg4Movie, .quickTimeMovie]
+        case .behavioral:
+            return [.commaSeparatedText, tsv, xlsx, xls, .spreadsheet,
+                    .json, .xml, .plainText, .text, .pdf]
+        case .analog:
+            return [.image, .png, .jpeg, .heic, .pdf]
         }
     }
 
-    var mimeType: String {
+    /// Best-effort MIME based on the file's actual extension so the worker / R2 store it correctly.
+    /// Falls back to the stream's default if the extension is unknown.
+    func mimeType(for url: URL) -> String {
+        let ext = url.pathExtension.lowercased()
+        switch ext {
+        case "pdf": return "application/pdf"
+        case "txt", "log": return "text/plain"
+        case "md", "markdown": return "text/markdown"
+        case "rtf": return "application/rtf"
+        case "doc": return "application/msword"
+        case "docx": return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        case "xls": return "application/vnd.ms-excel"
+        case "xlsx": return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        case "csv": return "text/csv"
+        case "tsv": return "text/tab-separated-values"
+        case "json": return "application/json"
+        case "xml": return "application/xml"
+        case "html", "htm": return "text/html"
+        case "mp3": return "audio/mpeg"
+        case "wav": return "audio/wav"
+        case "m4a": return "audio/m4a"
+        case "aiff", "aif": return "audio/aiff"
+        case "mp4", "m4v": return "video/mp4"
+        case "mov": return "video/quicktime"
+        case "png": return "image/png"
+        case "jpg", "jpeg": return "image/jpeg"
+        case "heic": return "image/heic"
+        default: return defaultMime
+        }
+    }
+
+    var defaultMime: String {
         switch self {
         case .text: return "application/octet-stream"
         case .audio: return "audio/m4a"
@@ -193,7 +243,7 @@ struct EvidenceStreamUploader: View {
             do {
                 let data = try Data(contentsOf: url)
                 let filename = url.lastPathComponent
-                let contentType = stream.mimeType
+                let contentType = stream.mimeType(for: url)
                 let presigned = try await APIClient.shared.presignUpload(filename: filename, contentType: contentType)
                 try await APIClient.shared.uploadFile(data, to: presigned, contentType: contentType)
                 files.append(presigned.publicURL)
