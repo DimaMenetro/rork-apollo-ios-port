@@ -1,6 +1,6 @@
 /**
  * CP-012-O-D-ESP — client-side port of the Worker's generateEsotericProfile handler.
- * Same prompts, same model (Gemini 3 Flash), same pre-computed Personal Year math,
+ * Same prompts, same model (Claude Sonnet 4), same pre-computed Personal Year math,
  * same SME validation schema, same staggered Promise.all sequencing.
  *
  * NOTE: Unlike the Worker's llm.ts which returns { response, raw }, our client-side

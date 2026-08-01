@@ -8,7 +8,6 @@
 import { RORK_LLM_URL, RORK_TOOLKIT_SECRET_KEY } from './apolloConfig';
 
 const MODEL_ALIASES = {
-  gemini_3_flash: 'google/gemini-2.5-flash',
   claude_sonnet_4_6: 'anthropic/claude-sonnet-4',
 };
 

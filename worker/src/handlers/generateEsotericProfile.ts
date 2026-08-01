@@ -1,7 +1,7 @@
 /**
  * CP-012-O-D-ESP — Esoteric Profile generation.
  * Direct port of base44/functions/generateEsotericProfile/entry.ts.
- * Same prompts, same model (Gemini 3 Flash), same pre-computed Personal Year math, same SME schema.
+ * Same prompts, same model (Claude Sonnet 4), same pre-computed Personal Year math, same SME schema.
  */
 import { Context } from "hono";
 import type { Env } from "../types";

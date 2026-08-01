@@ -3,7 +3,7 @@
  *
  * Hosts the four ported Base44 functions:
  *   POST /api/invokeLLM               — generic LLM bridge through Rork AI proxy
- *   POST /api/generateEsotericProfile — CP-012 esoteric profile (Gemini 3 Flash, 4 staggered prompts)
+ *   POST /api/generateEsotericProfile — CP-012 esoteric profile (Claude Sonnet 4, 4 staggered prompts)
  *   POST /api/synthesizeDossier       — MELLMA unified dossier (Claude Sonnet 4.6, two parallel calls)
  *   POST /api/analyzeAudio            — Hume prosody + AssemblyAI universal-3-pro
  *   POST /api/exportDSP               — jsPDF export, dark + light themes

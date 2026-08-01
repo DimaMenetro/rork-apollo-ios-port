@@ -20,7 +20,6 @@ export interface InvokeLLMResult<T = Record<string, unknown>> {
 }
 
 const MODEL_ALIASES: Record<string, string> = {
-  gemini_3_flash: "google/gemini-2.5-flash",
   claude_sonnet_4_6: "anthropic/claude-sonnet-4",
 };
 

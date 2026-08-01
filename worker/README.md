@@ -7,7 +7,7 @@ The only server-side piece. Preserves the **exact** Base44 function logic — sa
 | Path | Function | Implementation |
 |------|----------|----------------|
 | `POST /api/invokeLLM`              | Generic LLM call (Processing + DSP synthesis) | Routed through Rork AI proxy. Default model `anthropic/claude-sonnet-4`. |
-| `POST /api/generateEsotericProfile`| CP-012 esoteric profile                       | Same 4 staggered prompts (Phase I–II, III–IV, V–VII, VIII), same pre-computed Personal Year math, Gemini 3 Flash. |
+| `POST /api/generateEsotericProfile`| CP-012 esoteric profile                       | Same 4 staggered prompts (Phase I–II, III–IV, V–VII, VIII), same pre-computed Personal Year math, Claude Sonnet 4. |
 | `POST /api/synthesizeDossier`      | MELLMA unified dossier                        | Same two parallel Claude Sonnet 4.6 calls (narrative sections + convergence map). |
 | `POST /api/analyzeAudio`           | Hume prosody + AssemblyAI universal-3-pro     | Same `Promise.allSettled` fan-out, same polling intervals. |
 | `POST /api/exportDSP`              | PDF export                                    | Same jsPDF layout — cover, confidence arc, personality bars, predictive model, ESP sections, SME validation, footer — in dark + light themes. |

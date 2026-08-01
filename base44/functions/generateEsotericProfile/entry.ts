@@ -67,7 +67,7 @@ Mode: ${executionMode}
 CURRENT DATE: ${today} — Year: ${currentYear}, Month: ${currentMonth}. Use ONLY this date for all transit, progression, and personal year calculations. Do NOT use any other year.${personalYearNote}${timeframe ? `\nTimeframe: ${timeframe}` : ''}${focus ? `\nFocus: ${focus}` : ''}${dspSummary ? `\nDSP Summary: ${dspSummary}` : ''}`;
 
     const llm = (prompt, schema) => base44.asServiceRole.integrations.Core.InvokeLLM({
-      model: 'gemini_3_flash',
+      model: 'claude_sonnet_4_6',
       prompt,
       response_json_schema: { type: 'object', properties: schema }
     });
