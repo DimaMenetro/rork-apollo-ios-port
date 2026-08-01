@@ -8,7 +8,7 @@ Convert the Apollo Profiling Engine web app into a polished native iOS app. **Ba
 
 The four backend "functions" are reimplemented bit-for-bit, just hosted differently:
 
-- **Esoteric profile generation** — Gemini 3 Flash, same 4 staggered prompts (Phase I–II, III–IV, V–VII, VIII), same pre-computed Personal Year math, same SME validation schema.
+- **Esoteric profile generation** — Claude Sonnet 4, same 4 staggered prompts (Phase I–II, III–IV, V–VII, VIII), same pre-computed Personal Year math, same SME validation schema.
 - **Dossier synthesis** — Claude Sonnet 4.6, same two parallel calls (narrative sections + convergence map), same MELLMA-style integrative-analyst system prompt.
 - **Audio analysis** — Hume AI prosody + AssemblyAI universal-3-pro transcription, same polling and fallback behavior. The iOS app uploads the voice-memo/video file to a Cloudflare R2 bucket via a presigned URL, then hands the URL to the worker exactly like Base44 does.
 - **PDF export** — same jsPDF layout (cover, confidence arc, personality bars, predictive model, ESP sections, SME validation, footer), in both dark and light themes. Runs on the worker so the PDF byte-for-byte matches today's output.
