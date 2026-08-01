@@ -75,6 +75,7 @@ private struct ApolloRoutesModifier: ViewModifier {
             .navigationDestination(for: NavRoute.self) { route in
                 switch route {
                 case .subject(let id):    SubjectResolver(id: id) { SubjectDetailView(subject: $0) }
+                case .intake(let id):     SubjectResolver(id: id) { SubjectIntakeView(subject: $0) }
                 case .processing(let id): SubjectResolver(id: id) { ProcessingView(subject: $0) }
                 case .review(let id):     SubjectResolver(id: id) { SubjectReviewView(subject: $0) }
                 case .dspReport(let id):  SubjectResolver(id: id) { DSPReportView(subject: $0) }

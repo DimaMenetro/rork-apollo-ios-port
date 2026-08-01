@@ -5,6 +5,11 @@
       "name": "Apollo Engine",
       "path": "ios",
       "framework": "swift"
+    },
+    {
+      "name": "Apollo Engine",
+      "path": "web-apollo-engine",
+      "framework": "web"
     }
   ]
 }

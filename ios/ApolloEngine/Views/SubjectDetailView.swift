@@ -37,7 +37,7 @@ struct SubjectDetailView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    NavigationLink("Edit Intake", value: NavRoute.subject(subject.id))
+                    NavigationLink("Edit Intake", value: NavRoute.intake(subject.id))
                     Button("Delete", systemImage: "trash", role: .destructive) {
                         context.delete(subject)
                         Haptics.warning()
@@ -77,7 +77,7 @@ struct SubjectDetailView: View {
         VStack(spacing: 12) {
             phaseRow(label: "Intake", subtitle: "Manage evidence streams",
                      icon: "tray.and.arrow.down", color: Apollo.slate,
-                     route: .subject(subject.id))
+                     route: .intake(subject.id))
             phaseRow(label: "Processing", subtitle: "Run the 5 analysis modules",
                      icon: "waveform.path.ecg", color: Apollo.amber,
                      route: .processing(subject.id))

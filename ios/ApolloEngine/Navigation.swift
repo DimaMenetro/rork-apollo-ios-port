@@ -8,7 +8,8 @@
 import SwiftUI
 
 enum NavRoute: Hashable {
-    case subject(String)        // landing detail (Subject Intake / continue)
+    case subject(String)        // landing detail (phase hub)
+    case intake(String)         // evidence-stream editor
     case processing(String)
     case review(String)
     case dspReport(String)
