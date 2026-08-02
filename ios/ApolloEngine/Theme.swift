@@ -74,32 +74,6 @@ struct ApolloPalette {
         chipBg:     Color.white.opacity(0.06)
     )
 
-    /// Content card background — a subtle vertical gradient that picks up
-    /// atmosphere orb colour without using glassEffect (reserved for chrome).
-    /// Dark mode: faint top-lift gradient. Light mode: warm-white card.
-    var contentBg: AnyShapeStyle {
-        switch self {
-        case .dark:
-            return AnyShapeStyle(
-                LinearGradient(colors: [Color.white.opacity(0.07), Color.white.opacity(0.03)],
-                               startPoint: .top, endPoint: .bottom)
-            )
-        default:
-            return AnyShapeStyle(
-                LinearGradient(colors: [Color.white.opacity(0.55), Color.white.opacity(0.35)],
-                               startPoint: .top, endPoint: .bottom)
-            )
-        }
-    }
-
-    /// Refined card border — slightly brighter on the top edge for specular lift.
-    var cardBorderTop: Color {
-        switch self {
-        case .dark:  return Color.white.opacity(0.12)
-        default:     return Color.white.opacity(0.80)
-        }
-    }
-
     static let light = ApolloPalette(
         bg:         Color(red: 0.972, green: 0.972, blue: 0.988),
         title:      Color(red: 0.110, green: 0.110, blue: 0.118),
@@ -111,9 +85,6 @@ struct ApolloPalette {
         divider:    Color.black.opacity(0.06),
         chipBg:     Color.black.opacity(0.04)
     )
-
-    // contentBg and cardBorderTop are computed in the dark case above;
-    // the switch handles both palettes.
 
     static func current(for scheme: ColorScheme) -> ApolloPalette {
         scheme == .dark ? .dark : .light
@@ -152,21 +123,4 @@ extension Font {
     static let apolloLabel = Font.system(size: 10, weight: .semibold, design: .default)
     static let apolloMono  = Font.system(size: 12, weight: .regular, design: .monospaced)
     static let apolloTitle = Font.system(size: 26, weight: .light, design: .default)
-}
-
-// ── Dynamic Type–aware font helpers ──────────────────────────────────────────
-/// Use these instead of fixed `.font(.system(size:))` for text that should
-/// scale with the user's Dynamic Type setting. The base sizes match the
-/// original fixed sizes at `.large` (the system default).
-extension View {
-    /// Body text (replaces `.font(.system(size: 14))`)
-    func apolloBody() -> some View { font(.system(.body)) }
-    /// Subtitle text (replaces `.font(.system(size: 13))`)
-    func apolloSubhead() -> some View { font(.system(.subheadline)) }
-    /// Small muted text (replaces `.font(.system(size: 11/12))`)
-    func apolloCaption() -> some View { font(.system(.caption)) }
-    /// Section title (replaces `.font(.system(size: 28, weight: .light))`)
-    func apolloLargeTitle() -> some View { font(.system(.title, weight: .light)) }
-    /// Card title (replaces `.font(.system(size: 17, weight: .regular))`)
-    func apolloHeadline() -> some View { font(.system(.headline)) }
 }
