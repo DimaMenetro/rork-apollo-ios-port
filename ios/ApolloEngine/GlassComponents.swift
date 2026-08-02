@@ -2,17 +2,67 @@
 //  GlassComponents.swift
 //  ApolloEngine
 //
-//  Reusable Liquid Glass containers. Pure iOS 26 — uses native `glassEffect`
-//  throughout. The deployment target is iOS 26.0 so no fallback path is needed.
+//  Reusable surface components. Pure iOS 26.
+//
+//  Design language (per Apple HIG WWDC25):
+//  - GlassCard (content): gradient-filled surface with specular top border.
+//    Uses palette.contentBg — NOT glassEffect. Glass is reserved for the
+//    navigation layer (toolbars, tab bar, sheets, floating controls).
+//  - GlassFloatingCard: real glassEffect for chrome-level containers
+//    that float above content (export panels, header cards).
+//  - Buttons: primary uses gradient fill only (no stacked glass); secondary
+//    uses glassEffect since it's a chrome-level ghost control.
 //
 
 import SwiftUI
 
-// MARK: - Glass card
+// MARK: - Content card (elegant gradient surface — no glass)
 
 struct GlassCard<Content: View>: View {
     var cornerRadius: CGFloat = 20
     var padding: CGFloat = 20
+    var tint: Color? = nil
+    @ViewBuilder var content: () -> Content
+
+    @Environment(\.apollo) private var palette
+
+    var body: some View {
+        content()
+            .padding(padding)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(palette.contentBg)
+            }
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [palette.cardBorderTop, palette.cardStroke],
+                            startPoint: .top, endPoint: .bottom
+                        ),
+                        lineWidth: 1
+                    )
+            )
+            .shadow(color: Color.black.opacity(0.12), radius: 8, y: 4)
+            .overlay(alignment: .top) {
+                if let tint {
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .trim(from: 0, to: 0.5)
+                        .stroke(tint.opacity(0.35), lineWidth: 2)
+                        .frame(height: cornerRadius * 2)
+                        .clipped()
+                        .allowsHitTesting(false)
+                }
+            }
+    }
+}
+
+// MARK: - Floating glass card (chrome layer — uses real glassEffect)
+
+struct GlassFloatingCard<Content: View>: View {
+    var cornerRadius: CGFloat = 22
+    var padding: CGFloat = 22
     var tint: Color? = nil
     @ViewBuilder var content: () -> Content
 
@@ -34,7 +84,7 @@ struct GlassCard<Content: View>: View {
                 if let tint {
                     RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                         .trim(from: 0, to: 0.5)
-                        .stroke(tint.opacity(0.45), lineWidth: 2)
+                        .stroke(tint.opacity(0.40), lineWidth: 2)
                         .frame(height: cornerRadius * 2)
                         .clipped()
                         .allowsHitTesting(false)
@@ -57,7 +107,7 @@ struct SectionHeader: View {
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(accent)
             Text(title.uppercased())
-                .font(.system(size: 11, weight: .semibold))
+                .font(.system(.caption, weight: .semibold))
                 .tracking(1.4)
                 .foregroundStyle(palette.label)
             Spacer(minLength: 0)
@@ -84,22 +134,18 @@ struct StatusPill: View {
                 Image(systemName: icon).font(.system(size: 9, weight: .semibold))
             }
             Text(label.uppercased())
-                .font(.system(size: 10, weight: .semibold))
+                .font(.system(.caption2, weight: .semibold))
                 .tracking(0.8)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 4)
         .foregroundStyle(color)
-        .background(
-            Capsule().fill(color.opacity(0.14))
-        )
-        .overlay(
-            Capsule().strokeBorder(color.opacity(0.30), lineWidth: 1)
-        )
+        .background(Capsule().fill(color.opacity(0.14)))
+        .overlay(Capsule().strokeBorder(color.opacity(0.30), lineWidth: 1))
     }
 }
 
-// MARK: - Glass button styles
+// MARK: - Button styles
 
 struct ApolloPrimaryButtonStyle: ButtonStyle {
     var tint: Color = Apollo.amber
@@ -107,7 +153,7 @@ struct ApolloPrimaryButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 14, weight: .medium))
+            .font(.system(.subheadline, weight: .medium))
             .padding(.horizontal, 22)
             .padding(.vertical, 11)
             .foregroundStyle(.white)
@@ -116,7 +162,6 @@ struct ApolloPrimaryButtonStyle: ButtonStyle {
                     .fill(LinearGradient(colors: [tint, tint.opacity(0.85)],
                                          startPoint: .topLeading,
                                          endPoint: .bottomTrailing))
-                    .glassEffect(in: .capsule)
             }
             .shadow(color: tint.opacity(0.35), radius: 12, y: 6)
             .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
@@ -129,7 +174,7 @@ struct ApolloSecondaryButtonStyle: ButtonStyle {
     @Environment(\.apollo) private var palette
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 14, weight: .medium))
+            .font(.system(.subheadline, weight: .medium))
             .padding(.horizontal, 18)
             .padding(.vertical, 10)
             .foregroundStyle(palette.title)
@@ -176,10 +221,10 @@ struct EmptyStateView: View {
                 .font(.system(size: 38, weight: .light))
                 .foregroundStyle(accent.opacity(0.6))
             Text(title)
-                .font(.system(size: 17, weight: .regular))
+                .font(.system(.headline))
                 .foregroundStyle(palette.subtitle)
             Text(message)
-                .font(.system(size: 13))
+                .font(.system(.caption))
                 .foregroundStyle(palette.muted)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 320)
